@@ -3,7 +3,7 @@ class ApiError extends Error {
         statusCode,
         message = "Something went wrong",
         errors = [],
-        statck= ""
+        stack= ""
 
     ){
         super(message)
@@ -13,11 +13,13 @@ class ApiError extends Error {
         this.sucess = false;
         this.errors = errors    
 
-        if(statck) {
-            this.stack = statck
+        if(stack) {
+            this.stack = stack
 
         }else{
             Error.captureStackTrace(this, this.constructor)
         }
     }
 }
+
+export {ApiError}
