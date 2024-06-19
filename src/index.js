@@ -5,31 +5,25 @@ import dotenv from "dotenv";
 import { app } from "./app.js";
 
 dotenv.config({
-    path: './env'
+    path: './.env'
 })
 connectDB()
-
-
-app.listen(process.env.PORT, () => {
-    console.log("SERVER IS RUNNING on 8000");
-})
-
-
-// .then(()=> {
-//     app.listen(process.env.PORT || 8000, () => {
-//         console.log(`Server is running at 8000`)
-//     },
+.then(()=> {
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`Server is running at 8000`)
+    },
 //     app.on('error', (error) => {
 //         console.log("ERROR",error)
 //         throw error
-//     })
-
+//     }
 // )
 
-// })
-// .catch((err) => {
-//     console.log("MONGO db connection failed !!!",err);
-// })
+)
+
+})
+.catch((err) => {
+    console.log("MONGO db connection failed !!!",err);
+})
 
 
 
