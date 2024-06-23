@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import {User} from "../models/user.models.js";
 import { uploadCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 
 const registerUser = asyncHandler( async (req, res) => {
@@ -40,6 +41,7 @@ const registerUser = asyncHandler( async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, "User with email or username already exists ")
     }
+
     
 
     const avatarLocalPath =  req.files?.avatar[0]?.path;
@@ -50,20 +52,20 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
 
-    const avatar = await uploadCloudinary(avatarLocalPath)
+    const Avatar = await uploadCloudinary(avatarLocalPath)
     const coverImage = await uploadCloudinary(coverImagelocalPath)
 
-    if (!avatar) {
+    if (!Avatar) {
         throw new ApiError(400,"Avatarrrrrrrr file is required")      
     }
 
     const user = await User.create({
         fullname,
-        avatar: avatar.url,
+        avatar: Avatar.url,
         coverImage: coverImage?.url || "",
         password,
         email,
-        // username: username.toLowerCase()
+        username: username.toLowerCase()
     })
 
     const createdUser = await User.findById(user._id).select(
@@ -74,7 +76,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(500, "Something went wrong while registring")
     }
 
-    return res.status(200).json(
+    return res.status(201).json(
         new ApiResponse(200,createdUser,"User Regsitered sucessfully")
     )
 
