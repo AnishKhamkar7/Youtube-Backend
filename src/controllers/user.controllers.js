@@ -5,6 +5,22 @@ import { uploadCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
+// create a sigle method to geenrate the access and refreh tokens
+
+const generateAccessAndRefreshToken = async(userId) =>{
+    try {
+        const user = await User.findOne(userId)
+        const accessToken = await user.generateAccessToken()
+        const refreshToken = await user.generateRefreshToken()
+        user.refreshTokens = refreshToken 
+    
+       await user.save({ validateBeforeSave: false })
+       return {refreshToken,accessToken}
+    
+    } catch (error) {
+        throw new ApiError(500,"Something went wrong while generating access and refresh token")
+    }
+}   
 
 const registerUser = asyncHandler( async (req, res) => {
     // get user details from frontend
@@ -90,4 +106,103 @@ const registerUser = asyncHandler( async (req, res) => {
 
 } )
 
-export {registerUser}
+const loginuser = asyncHandler( async (req,res) =>{
+    // get user detials from frontend    | req.body --> data
+    //validate all the fields               | username or email
+    //check the fields to the databse       |find the user
+    //if ! return "login failed"            | password check
+    //else give the access token to the user | access and refresh token
+    // with the speicifc duration
+    //also save the refresh token for futher authentication | send cookie
+
+
+
+    const {username,email,password} = req.body //req.body into data
+
+
+    //either one of the field is mandatory
+    if (!username || !email) {
+        throw new ApiError(400, "username or email is required")
+    }
+
+    //find either username or email from the model database 
+    const user = await User.findOne({
+        $or: [{username},{email}]
+    }) 
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid user credentials")
+    }
+
+    const {accessToken,refreshTokens} = await genZerateAccessAndRefreshToken(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshTokens")
+
+    const options = {
+       httpOnly: true,
+       secure: true 
+    }
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken,options)
+    .cookie("refreshToken",refreshTokens,options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser, accessToken, refreshTokens
+            },
+            "User Logged In Sucessfully"
+        )
+    )
+
+
+
+})
+
+const logoutuser = asyncHandler(async (req,res) =>{
+    //clear cookies
+    //clear refresh tokens
+    //because of the middleware we have the acces to the object
+    // req.user which we created in the middleware
+
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshTokens: undefined
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true 
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCokkie("refreshToken",options)
+    .json(
+        new ApiResponse(200,{},"User Logged Out")
+    )
+})
+
+
+
+export {
+    registerUser,
+    loginuser,
+    logoutuser
+}
