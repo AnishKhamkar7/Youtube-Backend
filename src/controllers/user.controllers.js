@@ -101,6 +101,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(500, "Something went wrong while registring")
     }
 
+    
     return res.status(201).json(
         new ApiResponse(200,createdUser,"User Regsitered sucessfully")
     )
@@ -374,7 +375,7 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
 
 
 })
-
+ 
 const getUserProfileDetail = asyncHandler(async(req,res)=>{
     const {username} = req.params
 
@@ -441,6 +442,7 @@ const getUserProfileDetail = asyncHandler(async(req,res)=>{
         
     ])//console log the entire channel to find the value 
     
+    console.log(getUserProfileDetail);
 
     if(!channel?.length){
         throw new ApiError(404, "Channel does not exists")
